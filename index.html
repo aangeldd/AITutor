@@ -1,109 +1,100 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>AI Emotion-Friendly Tutor</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Calm Pastel Theme -->
+<!-- Pastel Theme -->
 <style>
     body {
-        font-family: "Arial", sans-serif;
+        font-family: Arial, sans-serif;
         background: #e7f5ff; /* pastel light blue */
-        color: #003f5c;
-        margin: 0;
-        padding: 20px;
         text-align: center;
+        padding: 20px;
+        color: #004e64;
     }
     h1 {
         color: #005f73;
-        margin-bottom: 5px;
-    }
-    p {
-        max-width: 600px;
-        margin: 0 auto 20px auto;
-        color: #02577a;
     }
     button {
-        background: #8bd3dd; /* pastel teal */
-        border: none;
-        padding: 12px 22px;
-        font-size: 16px;
-        border-radius: 12px;
-        cursor: pointer;
+        background: #8bd3dd;
         color: white;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-        transition: 0.2s;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
     button:hover {
         background: #6cc5cf;
     }
-
     #webcam-container canvas {
-        border-radius: 20px;       /* rounded */
-        box-shadow: 0 6px 14px rgba(0,0,0,0.18); /* soft shadow */
         margin-top: 20px;
+        border-radius: 20px;
+        box-shadow: 0 6px 14px rgba(0,0,0,0.18);
     }
-
     #label-container div {
         background: white;
-        margin: 8px auto;
-        padding: 10px;
-        max-width: 300px;
         border-radius: 10px;
-        box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        padding: 10px;
+        margin: 10px auto;
+        max-width: 300px;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+        font-size: 17px;
+    }
+    #statusMessage {
+        margin-top: 20px;
+        font-size: 22px;
         font-weight: bold;
         color: #005f73;
     }
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 </head>
 
 <body>
 
-<h1>AI Emotion-Friendly Tutor</h1>
-<p>
-This tool uses a Teachable Machine model to detect three states: <b>Engaged</b>, 
-<b>Confused</b>, and <b>Focused</b>. It’s designed to help understand how students 
-interact with digital learning in real time.
-</p>
+<h1>AI Emotion-Friendly Tutor 🌟</h1>
+<p>This tool detects whether you're <b>Engaged</b>, <b>Confused</b>, or <b>Focused</b> using a Teachable Machine model.</p>
 
-<button onclick="startModel()">Start Model</button>
+<button onclick="start()">Start</button>
 
 <div id="webcam-container"></div>
 <div id="label-container"></div>
-
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+<div id="statusMessage">Waiting to start…</div>
 
 <script>
+// MODEL FOLDER
 const URL = "./my_model/";
-let model, webcam, maxPredictions, labelContainer;
 
-async function startModel() {
-    const modelURL = URL + "model.json";
-    const metadataURL = URL + "metadata.json";
+let model, webcam, labelContainer, maxPredictions;
+
+async function start() {
+    document.getElementById("statusMessage").innerHTML = "Loading model… ⏳";
 
     // Load model
-    model = await tmImage.load(modelURL, metadataURL);
+    model = await tmImage.load(URL + "model.json", URL + "metadata.json");
     maxPredictions = model.getTotalClasses();
 
-    // Setup webcam
-    const flip = true;
-    webcam = new tmImage.Webcam(250, 250, flip);
+    // Webcam
+    webcam = new tmImage.Webcam(250, 250, true);
     await webcam.setup();
     await webcam.play();
     window.requestAnimationFrame(loop);
 
-    // Attach webcam
     document.getElementById("webcam-container").appendChild(webcam.canvas);
 
-    // Prepare label boxes
+    // Labels
     labelContainer = document.getElementById("label-container");
     labelContainer.innerHTML = "";
     for (let i = 0; i < maxPredictions; i++) {
         labelContainer.appendChild(document.createElement("div"));
     }
+
+    document.getElementById("statusMessage").innerHTML = "Model Loaded! 😊";
 }
 
 async function loop() {
@@ -114,10 +105,35 @@ async function loop() {
 
 async function predict() {
     const prediction = await model.predict(webcam.canvas);
-    for (let i = 0; i < maxPredictions; i++) {
+
+    let topClass = "";
+    let highest = 0;
+
+    for (let i = 0; i < prediction.length; i++) {
+        const p = prediction[i];
         labelContainer.childNodes[i].innerHTML =
-            prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+            `${p.className}: ${p.probability.toFixed(2)}`;
+
+        if (p.probability > highest) {
+            highest = p.probability;
+            topClass = p.className;
+        }
     }
+
+    // EMOJI + MESSAGE SYSTEM
+    let message = "";
+
+    if (topClass === "Engaged") {
+        message = "😀 You're engaged and ready to learn!";
+    } 
+    else if (topClass === "Confused") {
+        message = "🤔 You look confused — maybe try reviewing the material?";
+    } 
+    else if (topClass === "Focused") {
+        message = "🧠 You're focused! Keep up the great work.";
+    }
+
+    document.getElementById("statusMessage").innerHTML = message;
 }
 </script>
 
