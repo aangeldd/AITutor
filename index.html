@@ -1,160 +1,25 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Emotion-Friendly Tutor — Calm Pastel Theme</title>
+<meta charset="UTF-8">
+<title>AI Emotion-Friendly Tutor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    /* Calm pastel theme */
-    :root{
-      --bg:#f6faf7;
-      --card:#ffffff;
-      --muted:#6b7280;
-      --accent:#7fb7a4;     /* sage green */
-      --accent-2:#b7dedd;   /* pastel aqua */
-      --text:#0f172a;
-      --glass: rgba(255,255,255,0.7);
+<!-- Calm Pastel Theme -->
+<style>
+    body {
+        font-family: "Arial", sans-serif;
+        background: #e7f5ff; /* pastel light blue */
+        color: #003f5c;
+        margin: 0;
+        padding: 20px;
+        text-align: center;
     }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;
-      background: linear-gradient(180deg,var(--bg),#eef9f6);
-      color:var(--text);
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
+    h1 {
+        color: #005f73;
+        margin-bottom: 5px;
     }
-    .wrap{max-width:980px;margin:28px auto;padding:20px}
-    header{display:flex;align-items:center;gap:18px}
-    h1{margin:0;font-size:1.6rem}
-    p.lead{margin:6px 0 18px;color:var(--muted)}
-    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
-    .card{background:var(--card);border-radius:14px;padding:16px;box-shadow:0 8px 24px rgba(15,23,42,0.06)}
-    .small{font-size:.95rem;color:var(--muted)}
-    label{display:block;font-weight:600;margin-bottom:6px}
-    input[type=text]{width:100%;padding:10px;border-radius:10px;border:1px solid #e6f0ec;background:var(--glass)}
-    .controls{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-    button{background:var(--accent);color:white;border:none;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:600}
-    button.alt{background:transparent;border:1px solid var(--accent);color:var(--accent)}
-    #webcam {border-radius:10px;border:1px solid rgba(0,0,0,0.06);max-width:100%}
-    .prediction-row{display:flex;align-items:center;gap:12px;margin-top:12px}
-    .emoji{font-size:36px}
-    .label-box{padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(183,222,221,0.4), rgba(255,255,255,0.6));min-width:170px}
-    .conf{color:#b46b6b}
-    .focus{color:#3a7263}
-    .eng{color:#5e9f73}
-    .hint{color:var(--muted);margin-top:8px;font-size:.95rem}
-    ul{margin:8px 0 0 18px;color:var(--muted)}
-    footer{margin-top:18px;color:var(--muted);font-size:.9rem}
-    @media(max-width:920px){.grid{grid-template-columns:1fr}}
-  </style>
-
-  <!-- Teachable Machine helper -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
-</head>
-<body>
-  <div class="wrap">
-    <header>
-      <div>
-        <h1>Emotion-Friendly Tutor</h1>
-        <p class="lead">Calm pastel theme — friendly, realtime feedback while you study. Detects three simple states: <strong>Confused</strong> (🤔 hand on chin), <strong>Focused</strong> (🤫 hand over mouth), and <strong>Engaged</strong> (😄 looking at screen).</p>
-      </div>
-    </header>
-
-    <div class="card">
-      <strong>Quick explanation — problem & who benefits</strong>
-      <p class="small">Students studying alone often need quick, friendly nudges when they’re stuck, losing focus, or doing great. This tool provides lightweight, non-judgmental feedback so learners (and teachers) can adjust study habits in the moment.</p>
-      <ul>
-        <li>Who benefits: middle & high school students, remote learners, teachers supporting independent work.</li>
-        <li>Privacy: Runs fully in your browser — no images are uploaded.</li>
-      </ul>
-    </div>
-
-    <div class="grid">
-      <!-- LEFT: Main content -->
-      <main>
-        <div class="card">
-          <h3>How to use</h3>
-          <ol>
-            <li>Export your Teachable Machine (Image) model for the web (TensorFlow.js) and either put the model folder at <code>./my_model/</code> or paste the model URL in the field on the right.</li>
-            <li>Click <strong>Load Model</strong>. Then click <strong>Start</strong> and allow camera access.</li>
-            <li>Make sure your face and upper body are visible. Try these poses for a few seconds each:
-              <ul>
-                <li>Confused – hand on chin (like 🤔)</li>
-                <li>Focused – hand partly over mouth / thinking look (like 🤫)</li>
-                <li>Engaged – looking at screen, smiling or nodding (like 😄)</li>
-              </ul>
-            </li>
-            <li>Watch the label, emoji, and friendly suggestion. If confidence is low, try better lighting or move a bit closer.</li>
-          </ol>
-          <p class="hint">Tip: Train with several people and lighting conditions so the model generalizes well.</p>
-        </div>
-
-        <div class="card">
-          <h3>Friendly suggestions</h3>
-          <div id="suggestion" class="label-box small">No prediction yet — load the model and start the camera.</div>
-          <div class="hint">You can toggle voice feedback and stop the camera at any time.</div>
-        </div>
-      </main>
-
-      <!-- RIGHT: Controls / Webcam -->
-      <aside>
-        <div class="card">
-          <h3>Model & Camera</h3>
-
-          <label for="model-url">Model URL or local folder</label>
-          <input id="model-url" type="text" value="./my_model/" placeholder="https://teachablemachine.withgoogle.com/models/xxxxxx/ or ./my_model/">
-
-          <div class="controls">
-            <button id="loadBtn">Load Model</button>
-            <button id="startBtn" class="alt">Start</button>
-            <button id="stopBtn" class="alt">Stop</button>
-            <button id="voiceBtn" class="alt">Voice: On</button>
-          </div>
-
-          <div style="margin-top:12px;">
-            <div id="webcam-container" style="display:flex;justify-content:center"></div>
-            <div id="label-container" style="margin-top:10px"></div>
-          </div>
-
-          <div class="hint" style="margin-top:8px">Model status: <span id="model-status">not loaded</span></div>
-        </div>
-
-        <div class="card">
-          <h3>Icons</h3>
-          <div style="display:flex;gap:12px;align-items:center">
-            <div style="text-align:center">
-              <div class="emoji">🤔</div>
-              <div class="small conf">Confused</div>
-            </div>
-            <div style="text-align:center">
-              <div class="emoji">🤫</div>
-              <div class="small focus">Focused</div>
-            </div>
-            <div style="text-align:center">
-              <div class="emoji">😄</div>
-              <div class="small eng">Engaged</div>
-            </div>
-          </div>
-          <p class="hint" style="margin-top:10px">If your model uses different labels, the script will try to match them by text. You can also edit the label checks in the code.</p>
-        </div>
-      </aside>
-    </div>
-
-    <footer>
-      <div class="card small">
-        <strong>Teacher / Safety note:</strong> This project is for learning and friendly feedback only. Do not use it for grading, medical advice, or any high-stakes decisions. Get permission before using a webcam in class.
-      </div>
-    </footer>
-  </div>
-
-  <script>
-    // --- Core Teachable Machine logic (adapted from your starting code) ---
-    let URL = "./my_model/"; // default; user can change via input
-    let model, webcam, maxPredictions;
-    const modelStatusEl = document.getElementById('model-status');
-    const labelContainer = document.getElementById('label-container');
-    const webcamContainer = document.getElementById('webcam-container');
-    const suggestionEl
+    p {
+        max-width: 600px;
+        margin: 0 auto 20px auto;
+        color: #0257
